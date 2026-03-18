@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SLO Drill-Down — NIPUN FLN Mission</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#f0ede6;
+  --surface:#ffffff;
+  --card:#faf8f4;
+  --border:rgba(0,0,0,0.09);
+  --border2:rgba(0,0,0,0.16);
+  --text:#18170f;
+  --muted:#6b6860;
+  --faint:#a8a59e;
+  --saks:#0a6e40; --saks-l:#e2f5ec;
+  --madh:#8a6000; --madh-l:#fef3d7;
+  --prag:#b34a10; --prag-l:#fdeee5;
+  --zero:#a51c1c; --zero-l:#fde8e8;
+  --blue:#1a4fa8; --blue-l:#eaf0fd;
+  --state:#6b3fa0; --state-l:#f0ebfd;
+  --sans:'Plus Jakarta Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);font-family:var(--sans);color:var(--text);font-size:13px;}
+a{text-decoration:none;}
+
+/* TOPBAR */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  background:var(--text);color:#f0ede6;
+  display:flex;align-items:center;gap:14px;
+  padding:0 20px;height:50px;flex-wrap:wrap;
+}
+.topbar-brand{font-size:14px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;}
+.topbar-brand em{color:#f0c040;font-style:normal;}
+.topbar-sep{width:1px;height:22px;background:rgba(255,255,255,0.15);}
+.bc{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:11px;}
+.bc-crumb{cursor:pointer;padding:3px 8px;border-radius:4px;color:rgba(255,255,255,0.6);transition:all 0.13s;}
+.bc-crumb:hover,.bc-crumb.active{background:rgba(255,255,255,0.12);color:#fff;}
+.bc-crumb.active{font-weight:500;}
+.bc-sep{color:rgba(255,255,255,0.25);font-size:12px;}
+.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.t-sel{font-family:var(--mono);font-size:11px;background:rgba(255,255,255,0.1);color:#f0ede6;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:4px 10px;cursor:pointer;}
+.t-sel:focus{outline:none;}
+.t-btn{font-family:var(--mono);font-size:10px;font-weight:500;padding:5px 12px;border-radius:4px;cursor:pointer;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:#f0ede6;letter-spacing:0.03em;}
+.t-btn:hover{background:rgba(255,255,255,0.18);}
+
+/* PAGE */
+.page{max-width:1440px;margin:0 auto;padding:18px 20px;}
+
+/* PAGE HDR */
+.page-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.ph-left .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.ph-left h1{font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1.1;}
+.ph-left .sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.ph-right{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+.f-grp{display:flex;flex-direction:column;gap:3px;}
+.f-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--faint);}
+.f-sel{font-family:var(--mono);font-size:11px;background:var(--surface);color:var(--text);border:1.5px solid var(--border2);border-radius:5px;padding:5px 10px;cursor:pointer;}
+.f-sel:focus{outline:none;border-color:var(--text);}
+
+/* QUARTER TABS */
+.qtabs{display:flex;border-bottom:1.5px solid var(--border);margin-bottom:16px;gap:0;}
+.qt{font-family:var(--mono);font-size:11px;padding:8px 16px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all 0.12s;white-space:nowrap;}
+.qt:hover{color:var(--text);}
+.qt.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+.qt .tr{font-size:9px;margin-left:3px;}
+.tr-up{color:var(--saks);} .tr-dn{color:var(--zero);}
+.qt-cmp{margin-left:auto;border-left:1px solid var(--border);padding-left:16px;}
+
+/* COMPARISON BANNER */
+.banner{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:10px 16px;margin-bottom:16px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;
+}
+.ban-item{display:flex;align-items:center;gap:7px;}
+.ban-sw{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.ban-val{font-weight:700;font-family:var(--mono);font-size:14px;}
+.ban-name{color:var(--muted);}
+.ban-div{width:1px;height:28px;background:var(--border);}
+.ban-diff{font-family:var(--mono);font-size:10px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.bd-worse{background:var(--zero-l);color:var(--zero);}
+.bd-better{background:var(--saks-l);color:var(--saks);}
+.bd-eq{background:#f0ede6;color:var(--muted);}
+
+/* MAIN LAYOUT */
+.main-grid{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:14px;align-items:start;}
+
+/* PANEL */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.panel-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.panel-hdr-title{font-size:13px;font-weight:600;}
+.panel-hdr-meta{font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+/* TABLE */
+.tbl-scroll{overflow-x:auto;}
+table.dt{width:100%;border-collapse:collapse;}
+.dt thead th{
+  font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--muted);padding:8px 12px;background:var(--card);
+  border-bottom:1px solid var(--border);white-space:nowrap;text-align:left;
+}
+.dt thead th.tc{text-align:center;}
+.dt tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
+.dt tbody tr:last-child{border-bottom:none;}
+.dt tbody tr:hover{background:#f7f4ed;}
+.dt tbody tr.sel{background:#fffbe8;border-left:3px solid #f0c040;}
+.dt td{padding:10px 12px;vertical-align:middle;}
+.dt td.tc{text-align:center;}
+.rname{font-weight:600;font-size:12px;line-height:1.2;}
+.rsub{font-family:var(--mono);font-size:9px;color:var(--faint);margin-top:1px;}
+
+/* STACK BAR */
+.sb{display:flex;height:16px;border-radius:3px;overflow:hidden;gap:1px;}
+.sb div{height:100%;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-family:var(--mono);font-weight:500;transition:flex 0.35s ease;}
+.sb-s{background:#0a6e40;} .sb-m{background:#c49000;} .sb-p{background:#c45810;} .sb-z{background:#b01c1c;}
+
+/* PCT CELLS */
+.pct{font-family:var(--mono);font-size:11px;font-weight:600;text-align:center;}
+.pc-s{color:var(--saks);} .pc-m{color:var(--madh);} .pc-p{color:var(--prag);} .pc-z{color:var(--zero);}
+
+/* COMP CELL */
+.comp-cell{display:flex;flex-direction:column;gap:2px;}
+.comp-row{display:flex;align-items:baseline;gap:5px;font-size:11px;}
+.cr-rank{font-family:var(--mono);font-size:9px;color:var(--faint);width:12px;flex-shrink:0;}
+.cr-name{color:var(--muted);line-height:1.3;flex:1;}
+.cr-pct{font-family:var(--mono);font-size:10px;color:var(--zero);white-space:nowrap;margin-left:auto;padding-left:6px;}
+
+/* DELTA */
+.delta{font-family:var(--mono);font-size:10px;font-weight:500;padding:2px 6px;border-radius:20px;white-space:nowrap;display:inline-block;}
+.d-bad{background:var(--zero-l);color:var(--zero);}
+.d-good{background:var(--saks-l);color:var(--saks);}
+.d-eq{background:#f0ede6;color:var(--muted);}
+
+/* EXPAND BTN */
+.xbtn{font-size:11px;color:var(--faint);padding:3px 7px;border-radius:4px;cursor:pointer;font-family:var(--mono);}
+.xbtn:hover{color:var(--text);background:var(--card);}
+
+/* INLINE SUB TABLE */
+.sub-panel{background:var(--card);border-top:1px solid var(--border);}
+.sub-hdr{display:flex;gap:0;font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--faint);padding:6px 14px;border-bottom:1px solid var(--border);background:#ede9e0;}
+.sub-row{display:grid;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border);gap:8px;cursor:pointer;}
+.sub-row:last-child{border-bottom:none;}
+.sub-row:hover{background:#e8e4d8;}
+.sub-rname{font-size:11px;font-weight:600;color:var(--blue);}
+
+/* PILL */
+.pill{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px;white-space:nowrap;}
+.p-g{background:var(--saks-l);color:var(--saks);}
+.p-a{background:var(--madh-l);color:var(--madh);}
+.p-r{background:var(--zero-l);color:var(--zero);}
+
+/* RIGHT COL */
+.right-col{display:flex;flex-direction:column;gap:12px;}
+
+/* CAUSAL */
+.causal-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.ci{}
+.ci-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
+.ci-label{font-size:12px;font-weight:500;}
+.ci-val{font-family:var(--mono);font-size:13px;font-weight:700;}
+.ci-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:2px;}
+.ci-fill{height:100%;border-radius:3px;transition:width 0.45s ease;}
+.ci-hint{font-family:var(--mono);font-size:9px;color:var(--faint);}
+.ci-empty{padding:20px 16px;text-align:center;color:var(--faint);font-size:12px;line-height:1.6;}
+
+/* TREND */
+.trend-body{padding:14px 16px;}
+.trend-leg{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;}
+.leg{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);}
+.leg-sq{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+
+/* GEO */
+.geo-body{padding:12px 16px;display:flex;flex-direction:column;gap:6px;}
+.geo-row{display:flex;align-items:center;gap:8px;}
+.geo-name{font-size:11px;width:110px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.geo-track{flex:1;height:12px;background:var(--border);border-radius:2px;overflow:hidden;}
+.geo-fill{height:100%;border-radius:2px;transition:width 0.4s;}
+.geo-pct{font-family:var(--mono);font-size:10px;font-weight:700;width:30px;text-align:right;flex-shrink:0;}
+.geo-state{border-top:1px dashed rgba(107,63,160,0.35);padding-top:6px;margin-top:3px;}
+
+/* LEGEND */
+.tbl-legend{display:flex;gap:14px;flex-wrap:wrap;padding:8px 14px;border-top:1px solid var(--border);background:var(--card);}
+
+/* GRADE PANEL */
+.grade-panel{background:#eee9dd;border-top:1px solid var(--border);}
+.grade-hdr{padding:6px 14px;font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);display:flex;gap:20px;}
+.grade-row{display:grid;padding:7px 14px;border-bottom:1px solid var(--border);align-items:center;font-size:11px;gap:8px;}
+.grade-row:last-child{border-bottom:none;}
+
+@media(max-width:900px){.main-grid{grid-template-columns:1fr;}}
+@media print{.topbar .t-btn,.ph-right{display:none;}.page{padding:0;}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">NIPUN <em>FLN</em> · Student Learning Outcomes</div>
+  <div class="topbar-sep"></div>
+  <div class="bc" id="bc"></div>
+  <div class="topbar-right">
+    <div class="f-grp"><div class="f-lbl" style="color:rgba(255,255,255,0.4)">District</div>
+      <select class="t-sel" id="distSel" onchange="switchDist()">
+        <option value="0">Lucknow</option><option value="1">Varanasi</option>
+        <option value="2">Agra</option><option value="3">Kanpur</option>
+        <option value="4">Prayagraj</option><option value="5">Gorakhpur</option>
+        <option value="6">Meerut</option><option value="7">Aligarh</option>
+      </select>
+    </div>
+    <div class="f-grp"><div class="f-lbl" style="color:rgba(255,255,255,0.4)">Subject</div>
+      <select class="t-sel" id="subjSel" onchange="render()">
+        <option value="all">All</option><option value="hindi">Hindi</option><option value="math">Maths</option>
+      </select>
+    </div>
+    <div class="f-grp"><div class="f-lbl" style="color:rgba(255,255,255,0.4)">Grade</div>
+      <select class="t-sel" id="gradeSel" onchange="render()">
+        <option value="all">All grades</option><option value="1">Grade 1</option>
+        <option value="2">Grade 2</option><option value="3">Grade 3</option>
+      </select>
+    </div>
+    <button class="t-btn" onclick="window.print()">Export PDF</button>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- PAGE HEADER -->
+  <div class="page-hdr">
+    <div class="ph-left">
+      <div class="eyebrow" id="eyebrow">State level · Uttar Pradesh</div>
+      <h1 id="ph-title">District-wise student performance</h1>
+      <div class="sub" id="ph-sub">Click any row to drill into blocks, then schools</div>
+    </div>
+  </div>
+
+  <!-- QUARTER TABS -->
+  <div class="qtabs">
+    <div class="qt" onclick="setQ('Q1')">Q1 Apr–Jun <span class="tr tr-dn">▼3%</span></div>
+    <div class="qt" onclick="setQ('Q2')">Q2 Jul–Sep <span class="tr tr-dn">▼1%</span></div>
+    <div class="qt" onclick="setQ('Q3')">Q3 Oct–Dec <span class="tr tr-up">▲2%</span></div>
+    <div class="qt active" onclick="setQ('Q4')">Q4 Jan–Mar <span class="tr tr-up">▲4%</span></div>
+  </div>
+
+  <!-- BANNER -->
+  <div class="banner" id="banner"></div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- LEFT: TABLE -->
+    <div>
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-hdr-title" id="tbl-title">District-wise breakdown</div>
+          <div class="panel-hdr-meta" id="tbl-meta">Q4 · 2024-25</div>
+        </div>
+        <div class="tbl-scroll">
+          <table class="dt">
+            <thead id="thead"></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="tbl-legend">
+          <div class="leg"><div class="leg-sq" style="background:#0a6e40"></div>Saksham (grade level)</div>
+          <div class="leg"><div class="leg-sq" style="background:#c49000"></div>Madhyam</div>
+          <div class="leg"><div class="leg-sq" style="background:#c45810"></div>Pragatisheel</div>
+          <div class="leg"><div class="leg-sq" style="background:#b01c1c"></div>Zero scorer</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PANELS -->
+    <div class="right-col">
+
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-hdr-title">Causation indicators</div>
+          <div class="panel-hdr-meta" id="causal-meta">no selection</div>
+        </div>
+        <div id="causal-body"><div class="ci-empty">Click any row in the table to load the 5 causation indicators for that entity.</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-hdr-title">Quarterly trend</div>
+          <div class="panel-hdr-meta" id="trend-meta"></div>
+        </div>
+        <div class="trend-body">
+          <div class="trend-leg">
+            <div class="leg"><div class="leg-sq" style="background:#b01c1c"></div>Zero scorers</div>
+            <div class="leg"><div class="leg-sq" style="background:#0a6e40"></div>Saksham</div>
+            <div class="leg"><div class="leg-sq" style="background:#6b3fa0;opacity:0.6"></div>State avg</div>
+          </div>
+          <div style="position:relative;height:160px;"><canvas id="trendCanvas"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-hdr-title" id="geo-title">Zero scorer % — all districts vs state</div>
+        </div>
+        <div class="geo-body" id="geo-body"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ENGINE ──
+function sr(s,a,b){let x=Math.sin(s*9301+49297)*233280;x=x-Math.floor(x);return Math.round(a+x*(b-a));}
+function mksc(s){const z=sr(s,8,52),p=sr(s+1,10,27),m=sr(s+2,10,25),k=Math.max(4,100-z-p-m);return{z,p,m,k};}
+function qsc(s,q){const o={Q1:100,Q2:200,Q3:300,Q4:400}[q]||400;return mksc(s+o);}
+function mkCausal(s){return{teacherAtt:sr(s+50,52,93),studentAtt:sr(s+51,58,94),teacherAvail:sr(s+52,58,97),kayakalp:sr(s+53,18,89),mentorVisits:sr(s+54,18,86)};}
+
+const CH=['CVC word reading','Letter-sound mapping','Sentence comprehension','Oral reading fluency','Phonemic awareness','Vowel identification','Word recognition'];
+const CM=['2-digit addition','Subtraction (borrowing)','Place value','Number comparison','Multiplication basics','Pattern recognition','Shape identification'];
+function mkComps(s){const pool=s%2===0?CH:CM;const idx=[];while(idx.length<3){const i=sr(s+idx.length*7,0,pool.length-1);if(!idx.includes(i))idx.push(i);}return idx.map((i,j)=>({n:pool[i],p:sr(s+j+20,14,48)})).sort((a,b)=>a.p-b.p);}
+
+const DISTS=['Lucknow','Varanasi','Agra','Kanpur','Prayagraj','Gorakhpur','Meerut','Aligarh'];
+const BLK={
+  Lucknow:['Bakshi Ka Talab','Chinhat','Gosainganj','Kakori','Malihabad','Mohanlalganj','Sarojini Nagar'],
+  Varanasi:['Arajiline','Badagaon','Chiraigaon','Harhua','Kashi Vidyapeeth','Pindra','Sewapuri'],
+  Agra:['Achhnera','Akola','Bah','Etmadpur','Fatehabad','Jagner','Kheragarh'],
+  Kanpur:['Bhitargaon','Ghatampur','Kalyanpur','Narwal','Patara','Saroul','Shivrajpur'],
+  Prayagraj:['Bahria','Handia','Jasra','Karchhana','Manda','Phulpur','Soraon'],
+  Gorakhpur:['Bansgaon','Bhathat','Campierganj','Gola','Jungle Kaudia','Pipraich','Sahjanwa'],
+  Meerut:['Daurala','Hapur Road','Kharkhoda','Mawana','Parikshitgarh','Rohta','Sardhana'],
+  Aligarh:['Atrauli','Bijauli','Chandaus','Dhanipur','Gabhana','Iglas','Jawan'],
+};
+const SPFX=['PS Nehru Nagar','PS Gandhi Colony','PS Rampur','PS Aadarsh','PS Saraswati','UPS Vikas'];
+
+const SA={z:38,k:20};
+
+function buildData(){
+  return DISTS.map((name,di)=>{
+    const seed=(di+1)*37;
+    const blocks=(BLK[name]||[]).map((bn,bi)=>{
+      const bs=(di+1)*200+(bi+1)*41;
+      const schools=SPFX.map((sp,si)=>{
+        const ss=bs*10+(si+1)*17;
+        const grades=['Grade 1','Grade 2','Grade 3'].map((g,gi)=>
+          ['Hindi','Mathematics'].map((subj,sj)=>({
+            grade:g,subj,
+            scores:mksc(ss+gi*100+sj*50),
+            comps:mkComps(ss+gi*3+sj*7)
+          }))
+        ).flat();
+        return{name:sp+' ('+bn.split(' ')[0]+')',seed:ss,comps:mkComps(ss),causal:mkCausal(ss),grades};
+      });
+      return{name:bn,seed:bs,comps:mkComps(bs),causal:mkCausal(bs),schools};
+    });
+    return{name,seed,comps:mkComps(seed),causal:mkCausal(seed),blocks};
+  });
+}
+
+const DATA=buildData();
+let LEVEL='district';
+let SEL_DIST=null;
+let SEL_BLOCK=null;
+let SEL_ROW=null;
+let Q='Q4';
+let EXPANDED=new Set();
+let DIST_IDX=0;
+let tChart=null;
+
+function getScore(ent){return qsc(ent.seed,Q);}
+
+// ── STACK BAR ──
+function sbar(s,mini){
+  const t=s.k+s.m+s.p+s.z;
+  const w=v=>Math.max(0,(v/t*100)).toFixed(1);
+  const h=mini?'height:11px;':'height:16px;';
+  return`<div class="sb" style="${h}">
+    <div class="sb-s" style="flex:${w(s.k)}" title="Saksham ${s.k}%">${!mini&&s.k>=12?s.k+'%':''}</div>
+    <div class="sb-m" style="flex:${w(s.m)}" title="Madhyam ${s.m}%">${!mini&&s.m>=12?s.m+'%':''}</div>
+    <div class="sb-p" style="flex:${w(s.p)}" title="Pragatisheel ${s.p}%">${!mini&&s.p>=12?s.p+'%':''}</div>
+    <div class="sb-z" style="flex:${w(s.z)}" title="Zero ${s.z}%">${!mini&&s.z>=12?s.z+'%':''}</div>
+  </div>`;
+}
+
+function pill(v,lo,hi){const c=v>=hi?'p-g':v>=lo?'p-a':'p-r';return`<span class="pill ${c}">${v}%</span>`;}
+function dlt(diff){const c=diff>0?'d-bad':diff<0?'d-good':'d-eq';return`<span class="delta ${c}">${diff>0?'+':''}${diff}%</span>`;}
+
+// ── BANNER ──
+function renderBanner(ent){
+  const s=getScore(ent);
+  const diff=s.z-SA.z;
+  const dc=diff>0?'bd-worse':diff<0?'bd-better':'bd-eq';
+  const dl=diff>0?`+${diff}% above state avg`:diff<0?`${Math.abs(diff)}% below state avg`:'= state avg';
+  document.getElementById('banner').innerHTML=`
+    <div class="ban-item"><div class="ban-sw" style="background:#b01c1c"></div><div class="ban-val" style="color:#b01c1c">${s.z}%</div><div class="ban-name">Zero scorers · ${ent.name}</div></div>
+    <div class="ban-div"></div>
+    <div class="ban-item"><div class="ban-sw" style="background:#6b3fa0;opacity:0.7"></div><div class="ban-val" style="color:#6b3fa0">${SA.z}%</div><div class="ban-name">State average</div></div>
+    <span class="ban-diff ${dc}">${dl}</span>
+    <div class="ban-div"></div>
+    <div class="ban-item"><div class="ban-sw" style="background:#0a6e40"></div><div class="ban-val" style="color:#0a6e40">${s.k}%</div><div class="ban-name">Saksham · ${ent.name}</div></div>
+    <div class="ban-item"><div class="ban-sw" style="background:#6b3fa0;opacity:0.7"></div><div class="ban-val" style="color:#6b3fa0">${SA.k}%</div><div class="ban-name">State saksham avg</div></div>
+  `;
+}
+
+// ── CAUSAL ──
+function renderCausal(ent){
+  document.getElementById('causal-meta').textContent=ent.name;
+  const c=ent.causal;
+  const defs=[
+    {k:'teacherAtt',label:'Teacher attendance',val:c.teacherAtt,hint:`Target 90% · ${c.teacherAtt<70?'Below threshold':'On track'}`},
+    {k:'studentAtt',label:'Student attendance',val:c.studentAtt,hint:`Target 90% · ${c.studentAtt<75?'Needs attention':'On track'}`},
+    {k:'teacherAvail',label:'Teacher availability',val:c.teacherAvail,hint:`Posts filled · PTR risk ${c.teacherAvail<70?'High':'Moderate'}`},
+    {k:'kayakalp',label:'Kayakalp saturation',val:c.kayakalp,hint:'School infrastructure quality'},
+    {k:'mentorVisits',label:'Mentor visit coverage',val:c.mentorVisits,hint:'ARP/SRG visits this quarter'},
+  ];
+  document.getElementById('causal-body').innerHTML=`<div class="causal-body">${defs.map(d=>{
+    const col=d.val>=80?'#0a6e40':d.val>=60?'#8a6000':'#a51c1c';
+    return`<div class="ci">
+      <div class="ci-head"><div class="ci-label">${d.label}</div><div class="ci-val" style="color:${col}">${d.val}%</div></div>
+      <div class="ci-track"><div class="ci-fill" style="width:${Math.min(100,d.val)}%;background:${col}"></div></div>
+      <div class="ci-hint">${d.hint}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── TREND ──
+function renderTrend(ent){
+  const src=ent||(SEL_DIST?SEL_DIST:DATA[DIST_IDX]);
+  document.getElementById('trend-meta').textContent=src.name;
+  const qs=['Q1','Q2','Q3','Q4'];
+  const zS=qs.map(q=>qsc(src.seed,q).z);
+  const kS=qs.map(q=>qsc(src.seed,q).k);
+  const stZ=qs.map(()=>SA.z);
+  if(tChart){tChart.destroy();tChart=null;}
+  tChart=new Chart(document.getElementById('trendCanvas'),{
+    type:'line',
+    data:{labels:qs,datasets:[
+      {label:'Zero',data:zS,borderColor:'#b01c1c',backgroundColor:'transparent',tension:0.3,pointRadius:4,borderWidth:2.5},
+      {label:'Saksham',data:kS,borderColor:'#0a6e40',backgroundColor:'transparent',tension:0.3,pointRadius:4,borderWidth:2.5},
+      {label:'State',data:stZ,borderColor:'rgba(107,63,160,0.55)',backgroundColor:'transparent',borderDash:[5,3],pointRadius:0,borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      y:{min:0,max:100,ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,0.06)'}},
+      x:{ticks:{font:{size:11}},grid:{display:false}}
+    }}
+  });
+}
+
+// ── GEO ──
+function renderGeo(focused){
+  let rows=[],title='';
+  if(LEVEL==='district'||!SEL_DIST){
+    title='Zero scorer % — all districts vs state';
+    rows=DATA.map(d=>({name:d.name,val:getScore(d).z,cur:focused&&focused.name===d.name}));
+  } else if(LEVEL==='block'){
+    title=`Zero scorer % — ${SEL_DIST.name} blocks`;
+    rows=SEL_DIST.blocks.map(b=>({name:b.name,val:getScore(b).z,cur:focused&&focused.name===b.name}));
+  } else {
+    const bl=SEL_BLOCK||SEL_DIST.blocks[0];
+    title=`Zero scorer % — ${bl.name} schools`;
+    rows=bl.schools.map(s=>({name:s.name,val:getScore(s).z,cur:focused&&focused.name===s.name}));
+  }
+  rows.sort((a,b)=>b.val-a.val);
+  document.getElementById('geo-title').textContent=title;
+  const mx=Math.max(...rows.map(r=>r.val),SA.z);
+  document.getElementById('geo-body').innerHTML=rows.map(r=>{
+    const col=r.val>40?'#b01c1c':r.val>25?'#c45810':'#c49000';
+    const outline=r.cur?'outline:2px solid #18170f;outline-offset:-1px;border-radius:2px;':'';
+    return`<div class="geo-row">
+      <div class="geo-name" title="${r.name}" style="font-weight:${r.cur?600:400}">${r.name}</div>
+      <div class="geo-track" style="${outline}"><div class="geo-fill" style="width:${Math.round(r.val/mx*100)}%;background:${col}"></div></div>
+      <div class="geo-pct" style="color:${col}">${r.val}%</div>
+    </div>`;
+  }).join('')+`
+  <div class="geo-row geo-state">
+    <div class="geo-name" style="color:#6b3fa0;font-style:italic">State avg</div>
+    <div class="geo-track"><div class="geo-fill" style="width:${Math.round(SA.z/mx*100)}%;background:#6b3fa0;opacity:0.5"></div></div>
+    <div class="geo-pct" style="color:#6b3fa0">${SA.z}%</div>
+  </div>`;
+}
+
+// ── BREADCRUMB ──
+function renderBC(){
+  let h=`<span class="bc-crumb ${LEVEL==='district'&&!SEL_DIST?'active':''}" onclick="drillTo('state')">Uttar Pradesh</span>`;
+  if(SEL_DIST){h+=`<span class="bc-sep">›</span><span class="bc-crumb ${LEVEL==='block'?'active':''}" onclick="drillTo('district')">${SEL_DIST.name}</span>`;}
+  if(SEL_BLOCK){h+=`<span class="bc-sep">›</span><span class="bc-crumb ${LEVEL==='school'?'active':''}" onclick="drillTo('block')">${SEL_BLOCK.name}</span>`;}
+  document.getElementById('bc').innerHTML=h;
+}
+
+// ── MAIN RENDER ──
+function render(){
+  renderBC();
+  document.getElementById('tbl-meta').textContent=Q+' · 2024-25';
+  const dist=DATA[DIST_IDX];
+
+  if(LEVEL==='district'){
+    document.getElementById('eyebrow').textContent='State level · Uttar Pradesh';
+    document.getElementById('ph-title').textContent='District-wise student performance';
+    document.getElementById('ph-sub').textContent=DATA.length+' districts · Click any row to drill into blocks';
+    document.getElementById('tbl-title').textContent='District-wise breakdown & lagging competencies';
+    document.getElementById('thead').innerHTML=`<tr>
+      <th style="width:110px">District</th>
+      <th style="width:170px">Performance breakdown</th>
+      <th class="tc" style="width:55px">Saksham</th>
+      <th class="tc" style="width:55px">Madhyam</th>
+      <th class="tc" style="width:65px">Pragatisheel</th>
+      <th class="tc" style="width:65px">Zero scorer</th>
+      <th style="width:180px">Top lagging competencies</th>
+      <th class="tc" style="width:65px">vs State</th>
+    </tr>`;
+    document.getElementById('tbody').innerHTML=DATA.map(ent=>{
+      const s=getScore(ent);const diff=s.z-SA.z;const isSel=SEL_ROW&&SEL_ROW.name===ent.name;
+      return`<tr class="${isSel?'sel':''}" onclick="onRowClick('dist','${ent.name}')">
+        <td><div class="rname">${ent.name}</div><div class="rsub">${ent.blocks.length} blocks</div></td>
+        <td>${sbar(s,false)}</td>
+        <td class="pct pc-s">${s.k}%</td>
+        <td class="pct pc-m">${s.m}%</td>
+        <td class="pct pc-p">${s.p}%</td>
+        <td class="pct pc-z">${s.z}%</td>
+        <td class="comp-cell">${ent.comps.slice(0,2).map((c,i)=>`<div class="comp-row"><span class="cr-rank">#${i+1}</span><span class="cr-name">${c.n}</span><span class="cr-pct">${c.p}%</span></div>`).join('')}</td>
+        <td class="tc">${dlt(diff)}</td>
+      </tr>`;
+    }).join('');
+    const focus=SEL_ROW||dist;
+    renderBanner(focus);renderCausal(focus);renderTrend(focus);renderGeo(SEL_ROW);
+
+  } else if(LEVEL==='block'){
+    const dsc=getScore(SEL_DIST);
+    document.getElementById('eyebrow').textContent=`District → ${SEL_DIST.name}`;
+    document.getElementById('ph-title').textContent='Block-wise student performance';
+    document.getElementById('ph-sub').textContent=SEL_DIST.blocks.length+' blocks · Click row to drill into schools · ▼ to expand schools inline';
+    document.getElementById('tbl-title').textContent=`Block-wise — ${SEL_DIST.name}`;
+    document.getElementById('thead').innerHTML=`<tr>
+      <th style="width:130px">Block</th>
+      <th style="width:160px">Performance</th>
+      <th class="tc" style="width:52px">Saksham</th>
+      <th class="tc" style="width:52px">Madhyam</th>
+      <th class="tc" style="width:60px">Pragatisheel</th>
+      <th class="tc" style="width:60px">Zero scorer</th>
+      <th style="width:170px">Top lagging competencies</th>
+      <th class="tc" style="width:60px">vs Dist</th>
+      <th style="width:30px"></th>
+    </tr>`;
+    let html='';
+    SEL_DIST.blocks.forEach(ent=>{
+      const s=getScore(ent);const diff=s.z-dsc.z;const isSel=SEL_ROW&&SEL_ROW.name===ent.name;const isExp=EXPANDED.has(ent.name);
+      html+=`<tr class="${isSel?'sel':''}" onclick="onRowClick('block','${ent.name}')">
+        <td><div class="rname">${ent.name}</div><div class="rsub">${ent.schools.length} schools</div></td>
+        <td>${sbar(s,false)}</td>
+        <td class="pct pc-s">${s.k}%</td>
+        <td class="pct pc-m">${s.m}%</td>
+        <td class="pct pc-p">${s.p}%</td>
+        <td class="pct pc-z">${s.z}%</td>
+        <td class="comp-cell">${ent.comps.slice(0,2).map((c,i)=>`<div class="comp-row"><span class="cr-rank">#${i+1}</span><span class="cr-name">${c.n}</span><span class="cr-pct">${c.p}%</span></div>`).join('')}</td>
+        <td class="tc">${dlt(diff)}</td>
+        <td onclick="event.stopPropagation();toggleExp('${ent.name}')" class="xbtn">${isExp?'▲':'▼'}</td>
+      </tr>`;
+      if(isExp){
+        html+=`<tr><td colspan="9" style="padding:0">
+          <div class="sub-panel">
+            <div class="sub-hdr"><span style="width:140px">School</span><span style="width:100px">Performance</span><span style="width:55px">T.Attend</span><span style="width:55px">S.Attend</span><span style="width:55px">T.Avail</span><span style="width:65px">Kayakalp</span><span>Mentor Visits</span></div>
+            ${ent.schools.map(sch=>{
+              const ss=getScore(sch);const c=sch.causal;
+              return`<div class="sub-row" style="grid-template-columns:140px 100px 55px 55px 55px 65px 1fr" onclick="event.stopPropagation();onSubSchool('${ent.name}','${sch.name}')">
+                <div class="sub-rname">${sch.name}</div>
+                <div>${sbar(ss,true)}</div>
+                ${pill(c.teacherAtt,65,80)}${pill(c.studentAtt,70,85)}${pill(c.teacherAvail,65,80)}${pill(c.kayakalp,40,65)}${pill(c.mentorVisits,40,65)}
+              </div>`;
+            }).join('')}
+          </div>
+        </td></tr>`;
+      }
+    });
+    document.getElementById('tbody').innerHTML=html;
+    const focus=SEL_ROW||SEL_DIST;
+    renderBanner(focus);renderCausal(focus);renderTrend(focus);renderGeo(SEL_ROW);
+
+  } else if(LEVEL==='school'){
+    const bl=SEL_BLOCK||SEL_DIST.blocks[0];
+    const bsc=getScore(bl);
+    document.getElementById('eyebrow').textContent=`${SEL_DIST.name} → ${bl.name}`;
+    document.getElementById('ph-title').textContent='School-wise performance + causation';
+    document.getElementById('ph-sub').textContent=bl.schools.length+' schools · All 5 causation indicators visible · ▼ for Grade × Subject breakdown';
+    document.getElementById('tbl-title').textContent=`School-wise — ${bl.name}`;
+    document.getElementById('thead').innerHTML=`<tr>
+      <th style="width:130px">School</th>
+      <th style="width:130px">Performance</th>
+      <th class="tc" style="width:50px">Saksham</th>
+      <th class="tc" style="width:50px">Zero</th>
+      <th class="tc" style="width:60px">T.Attend</th>
+      <th class="tc" style="width:60px">S.Attend</th>
+      <th class="tc" style="width:55px">T.Avail</th>
+      <th class="tc" style="width:65px">Kayakalp</th>
+      <th class="tc" style="width:65px">Mentor</th>
+      <th style="width:28px"></th>
+    </tr>`;
+    let html='';
+    bl.schools.forEach(ent=>{
+      const s=getScore(ent);const c=ent.causal;const isSel=SEL_ROW&&SEL_ROW.name===ent.name;const isExp=EXPANDED.has(ent.name);
+      html+=`<tr class="${isSel?'sel':''}" onclick="onRowClick('school','${ent.name}')">
+        <td><div class="rname" style="font-size:11px">${ent.name}</div></td>
+        <td>${sbar(s,false)}</td>
+        <td class="pct pc-s">${s.k}%</td>
+        <td class="pct pc-z">${s.z}%</td>
+        <td class="tc">${pill(c.teacherAtt,65,80)}</td>
+        <td class="tc">${pill(c.studentAtt,70,85)}</td>
+        <td class="tc">${pill(c.teacherAvail,65,80)}</td>
+        <td class="tc">${pill(c.kayakalp,40,65)}</td>
+        <td class="tc">${pill(c.mentorVisits,40,65)}</td>
+        <td onclick="event.stopPropagation();toggleExp('${ent.name}')" class="xbtn">${isExp?'▲':'▼'}</td>
+      </tr>`;
+      if(isExp){
+        html+=`<tr><td colspan="10" style="padding:0">
+          <div class="grade-panel">
+            <div class="grade-hdr"><span style="width:70px">Grade</span><span style="width:90px">Subject</span><span style="width:160px">Breakdown</span><span style="width:50px">Saksham</span><span style="width:50px">Madhyam</span><span style="width:60px">Pragatisheel</span><span style="width:50px">Zero</span><span>Top lagging</span></div>
+            ${ent.grades.map(g=>`<div class="grade-row" style="grid-template-columns:70px 90px 160px 50px 50px 60px 50px 1fr">
+              <div style="font-weight:600;font-size:11px">${g.grade}</div>
+              <div style="font-size:11px;color:var(--muted)">${g.subj}</div>
+              <div>${sbar(g.scores,true)}</div>
+              <div class="pct pc-s" style="font-size:10px">${g.scores.k}%</div>
+              <div class="pct pc-m" style="font-size:10px">${g.scores.m}%</div>
+              <div class="pct pc-p" style="font-size:10px">${g.scores.p}%</div>
+              <div class="pct pc-z" style="font-size:10px">${g.scores.z}%</div>
+              <div style="font-size:10px;color:var(--muted)">${g.comps[0]?g.comps[0].n+' ('+g.comps[0].p+'%)':''}</div>
+            </div>`).join('')}
+          </div>
+        </td></tr>`;
+      }
+    });
+    document.getElementById('tbody').innerHTML=html;
+    const focus=SEL_ROW||bl;
+    renderBanner(focus);renderCausal(focus);renderTrend(focus);renderGeo(SEL_ROW);
+  }
+}
+
+// ── INTERACTIONS ──
+function onRowClick(type,name){
+  if(type==='dist'){
+    const d=DATA.find(x=>x.name===name);
+    SEL_ROW=d;renderBanner(d);renderCausal(d);renderTrend(d);renderGeo(d);
+    highlightRow(name);
+    SEL_DIST=d;SEL_ROW=null;LEVEL='block';EXPANDED.clear();render();
+  } else if(type==='block'){
+    const b=SEL_DIST.blocks.find(x=>x.name===name);
+    SEL_ROW=b;renderBanner(b);renderCausal(b);renderTrend(b);renderGeo(b);
+    highlightRow(name);
+    SEL_BLOCK=b;SEL_ROW=null;LEVEL='school';EXPANDED.clear();render();
+  } else if(type==='school'){
+    const bl=SEL_BLOCK||SEL_DIST.blocks[0];
+    const sch=bl.schools.find(x=>x.name===name);
+    if(sch){SEL_ROW=sch;renderBanner(sch);renderCausal(sch);renderTrend(sch);renderGeo(sch);}
+    highlightRow(name);
+  }
+}
+
+function onSubSchool(blockName,schoolName){
+  const bl=SEL_DIST.blocks.find(x=>x.name===blockName);
+  const sch=bl?bl.schools.find(s=>s.name===schoolName):null;
+  if(sch){SEL_ROW=sch;renderCausal(sch);renderTrend(sch);}
+}
+
+function highlightRow(name){
+  document.querySelectorAll('#tbody tr.sel').forEach(r=>r.classList.remove('sel'));
+  document.querySelectorAll('#tbody tr').forEach(tr=>{
+    const rn=tr.querySelector('.rname');
+    if(rn&&rn.textContent===name)tr.classList.add('sel');
+  });
+}
+
+function drillTo(lv){
+  if(lv==='state'){LEVEL='district';SEL_DIST=null;SEL_BLOCK=null;SEL_ROW=null;EXPANDED.clear();}
+  else if(lv==='district'){LEVEL='block';SEL_BLOCK=null;SEL_ROW=null;EXPANDED.clear();}
+  else if(lv==='block'){LEVEL='school';SEL_ROW=null;EXPANDED.clear();}
+  render();
+}
+
+function toggleExp(name){EXPANDED.has(name)?EXPANDED.delete(name):EXPANDED.add(name);render();}
+
+function setQ(q){
+  Q=q;
+  document.querySelectorAll('.qt').forEach(t=>t.classList.toggle('active',t.textContent.trim().startsWith(q)));
+  render();
+}
+
+function switchDist(){
+  DIST_IDX=parseInt(document.getElementById('distSel').value);
+  LEVEL='district';SEL_DIST=null;SEL_BLOCK=null;SEL_ROW=null;EXPANDED.clear();
+  render();
+}
+
+// INIT
+render();
+</script>
+</body>
+</html>
